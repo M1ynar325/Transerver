@@ -29,7 +29,7 @@ Transerver 是面向 Minecraft 多服务器网络的可靠消息前置库。它�
 
 需要 JDK 21。
 
-构建产物 `build/libs/Transerver-<version>.jar` 是双用途发行文件：
+构建产物 `neoforge/build/libs/Transerver-<version>.jar` 是双用途发行文件：
 
 - 放入 NeoForge 服务器的 `mods` 目录时，它作为独立前置模组加载；
 - 使用 `java -jar Transerver-<version>.jar [router.properties]` 时，它作为外置 Router 运行。

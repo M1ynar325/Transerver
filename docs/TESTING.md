@@ -7,8 +7,8 @@ This probe tests Transerver itself before Minecraft or Distant Stock is involved
 Copy `transerver-router.example.properties` to `transerver-router.properties`. Set at least three unique node IDs and replace `networkSecret`. Build and start:
 
 ```bash
-./gradlew installDist
-./build/install/Transerver/bin/Transerver transerver-router.properties
+./gradlew :core:installDist
+./core/build/install/Transerver/bin/Transerver transerver-router.properties
 ```
 
 ## 2. Start three probe nodes
@@ -16,7 +16,7 @@ Copy `transerver-router.example.properties` to `transerver-router.properties`. S
 On each machine, copy `transerver-probe.example.properties`, give it one of the Router node IDs, set the Router URL, and use exactly the same secret. Each node needs its own data directory.
 
 ```bash
-./build/install/Transerver/bin/Transerver probe transerver-probe.properties
+./core/build/install/Transerver/bin/Transerver probe transerver-probe.properties
 ```
 
 At the prompt, send a message to another node:
