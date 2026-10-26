@@ -28,3 +28,9 @@ jobs:
           path: build/distributions/*
           if-no-files-found: error
           retention-days: 14
+      - uses: actions/upload-artifact@v7
+        with:
+          name: transerver-jar-snapshot
+          path: build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 14
