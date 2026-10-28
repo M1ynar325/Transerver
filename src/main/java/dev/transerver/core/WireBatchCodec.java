@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class WireBatchCodec {
+    static final int MAX_BATCH_BYTES = 4 * 1024 * 1024 + 1024;
     private static final int MAX_BATCH_SIZE = 128;
     private static final int MAX_ENVELOPE_BYTES = EnvelopeCodec.MAX_PAYLOAD_BYTES + 16 * 1024;
     private static final int MAX_RECEIPT_BYTES = 16 * 1024;
@@ -51,6 +52,9 @@ final class WireBatchCodec {
         if (items.size() > MAX_BATCH_SIZE) {
             throw new IOException("Batch contains too many entries");
         }
+        long size = 4;
+        for (byte[] item : items) size += 4L + item.length;
+        if (size > MAX_BATCH_BYTES) throw new IOException("Batch byte budget exceeded");
         var buffer = new ByteArrayOutputStream();
         try (var output = new DataOutputStream(buffer)) {
             output.writeInt(items.size());
@@ -63,6 +67,7 @@ final class WireBatchCodec {
     }
 
     private static List<byte[]> decodeBatch(byte[] data, int maxItemBytes) throws IOException {
+        if (data == null || data.length > MAX_BATCH_BYTES) throw new IOException("Batch byte budget exceeded");
         try (var input = new DataInputStream(new ByteArrayInputStream(data))) {
             int count = input.readInt();
             if (count < 0 || count > MAX_BATCH_SIZE) {

@@ -11,6 +11,7 @@ public final class TranserverRuntime implements AutoCloseable {
     private final TranserverNode node;
     private final Duration interval;
     private final ScheduledExecutorService executor;
+    private final AtomicBoolean wakeQueued = new AtomicBoolean();
     private final AtomicBoolean started = new AtomicBoolean();
 
     public TranserverRuntime(TranserverNode node, Duration interval) {
@@ -34,8 +35,14 @@ public final class TranserverRuntime implements AutoCloseable {
     }
 
     public void wake() {
-        if (!executor.isShutdown()) {
-            executor.execute(node::pumpSafely);
+        if (!executor.isShutdown() && wakeQueued.compareAndSet(false, true)) {
+            try {
+                executor.execute(() -> {
+                    try { node.pumpSafely(); } finally { wakeQueued.set(false); }
+                });
+            } catch (java.util.concurrent.RejectedExecutionException stopped) {
+                wakeQueued.set(false);
+            }
         }
     }
 

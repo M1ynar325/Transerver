@@ -30,7 +30,9 @@ public final class HttpRouterServer implements AutoCloseable {
         this.router = router;
         this.authenticator = authenticator;
         this.server = HttpServer.create(address, 0);
-        this.executor = Executors.newVirtualThreadPerTaskExecutor();
+        this.executor = new java.util.concurrent.ThreadPoolExecutor(4, 8, 30,
+                java.util.concurrent.TimeUnit.SECONDS, new java.util.concurrent.ArrayBlockingQueue<>(64),
+                new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
         server.setExecutor(executor);
         server.createContext("/v1/hello", this::handleHello);
         server.createContext("/v1/nodes", this::handleNodes);

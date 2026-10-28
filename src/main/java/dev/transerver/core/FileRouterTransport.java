@@ -15,6 +15,8 @@ import java.util.UUID;
 public final class FileRouterTransport implements Transport {
     private final MessageStore store;
     private final Set<String> nodes;
+    private final java.util.Map<String, FairMailbox> mailboxes = new java.util.HashMap<>();
+    private FairMailbox mailbox(String area) { return mailboxes.computeIfAbsent(area, ignored -> new FairMailbox()); }
     private final EnvelopeCodec envelopeCodec = new EnvelopeCodec();
     private final ReceiptCodec receiptCodec = new ReceiptCodec();
 
@@ -36,8 +38,11 @@ public final class FileRouterTransport implements Transport {
             return DeliveryState.REJECTED;
         }
         try {
-            store.put(relayArea(message.destination()), message.messageId().toString(),
-                    envelopeCodec.encode(message));
+            String area = relayArea(message.destination());
+            String key = message.messageId().toString();
+            boolean fresh = store.get(area, key).isEmpty();
+            store.put(area, key, envelopeCodec.encode(message));
+            if (fresh) mailbox(area).added(key);
             return DeliveryState.RELAYED;
         } catch (IOException exception) {
             throw new TranserverException("Router could not persist message", exception);
@@ -49,7 +54,7 @@ public final class FileRouterTransport implements Transport {
         requireKnownNode(nodeId);
         try {
             var result = new ArrayList<MessageEnvelope>();
-            for (var entry : store.list(relayArea(nodeId), limit)) {
+            for (var entry : mailbox(relayArea(nodeId)).next(store, relayArea(nodeId), Math.min(limit, 32))) {
                 result.add(envelopeCodec.decode(entry.value()));
             }
             return List.copyOf(result);
@@ -85,7 +90,7 @@ public final class FileRouterTransport implements Transport {
         requireKnownNode(nodeId);
         try {
             var result = new ArrayList<FinalReceipt>();
-            for (var entry : store.list(receiptArea(nodeId), limit)) {
+            for (var entry : mailbox(receiptArea(nodeId)).next(store, receiptArea(nodeId), Math.min(limit, 128))) {
                 result.add(receiptCodec.decode(entry.value()));
             }
             return List.copyOf(result);

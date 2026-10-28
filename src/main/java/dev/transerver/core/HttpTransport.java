@@ -138,7 +138,7 @@ public final class HttpTransport implements Transport {
             builder.GET();
         }
         try {
-            HttpResponse<byte[]> response = client.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray());
+            HttpResponse<byte[]> response = client.send(builder.build(), ignored -> new LimitedBodySubscriber(WireBatchCodec.MAX_BATCH_BYTES));
             if (response.statusCode() / 100 != 2) {
                 String detail = new String(response.body(), StandardCharsets.UTF_8);
                 throw new TranserverException("Router returned HTTP " + response.statusCode() + ": " + detail,
