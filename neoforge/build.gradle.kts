@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    `maven-publish`
     id("net.neoforged.moddev") version "2.0.107"
 }
 
@@ -7,8 +8,15 @@ base {
     archivesName = "Transerver"
 }
 
+val bundledCore by configurations.creating
+
+configurations {
+    compileClasspath { extendsFrom(bundledCore) }
+    runtimeClasspath { extendsFrom(bundledCore) }
+}
+
 dependencies {
-    implementation(project(":core"))
+    bundledCore(project(":core"))
 }
 
 neoForge {
@@ -52,4 +60,13 @@ tasks.jar {
 
 tasks.named<Jar>("sourcesJar") {
     from(coreSourceSets.getByName("main").allSource)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            artifactId = "Transerver"
+            from(components["java"])
+        }
+    }
 }

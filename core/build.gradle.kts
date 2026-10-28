@@ -1,6 +1,5 @@
 plugins {
     `java-library`
-    `maven-publish`
     application
 }
 
@@ -23,14 +22,5 @@ tasks.jar {
     manifest {
         attributes["Automatic-Module-Name"] = "dev.transerver"
         attributes["Main-Class"] = "dev.transerver.core.TranserverRouterMain"
-    }
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            artifactId = "Transerver"
-            from(components["java"])
-        }
     }
 }
