@@ -112,6 +112,7 @@ class TranserverNodeIntegrationTest {
         alpha.pump();
         beta.pump();
         handlerResult.complete(DeliveryResult.APPLIED);
+        beta.pump(); // Completion callbacks enqueue; durable receipts are written by the IO pump.
 
         var restarted = new TranserverNode("beta", router,
                 new FileMessageStore(temporaryDirectory.resolve("beta")));

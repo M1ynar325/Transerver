@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = "dev.transerver"
-    version = providers.gradleProperty("releaseVersion").orElse("0.1.0-SNAPSHOT").get()
+    version = providers.gradleProperty("releaseVersion").orElse("0.1.1").get()
 
     repositories {
         mavenCentral()

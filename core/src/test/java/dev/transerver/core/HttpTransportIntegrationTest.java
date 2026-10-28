@@ -93,6 +93,31 @@ class HttpTransportIntegrationTest {
         }
     }
 
+    @Test
+    void offlineNodeDoesNotBlockOnlineHelloOverRealHttp() throws Exception {
+        var router = new FileRouterTransport(new FileMessageStore(temporaryDirectory.resolve("router")),
+                Set.of("alpha", "beta", "offline"));
+        try (var server = new HttpRouterServer(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0),
+                router, new HmacAuthenticator(SECRET))) {
+            server.start();
+            RouteResolver routes = ignored -> java.util.Optional.of(server.baseUri());
+            var alpha = node("alpha", routes);
+            for (int i = 0; i < 180; i++) alpha.send("offline", "test:parcel", bytes("offline"), SendOptions.defaults());
+            alpha = node("alpha", routes); // discard fresh hints, as with the production upgrade
+            var beta = node("beta", routes);
+            var calls = new java.util.concurrent.atomic.AtomicInteger();
+            beta.registerHandler("test:hello", message -> {
+                calls.incrementAndGet();
+                return CompletableFuture.completedFuture(DeliveryResult.APPLIED);
+            });
+            var hello = alpha.send("beta", "test:hello", bytes("hello"), SendOptions.defaults());
+            alpha.pump(); beta.pump(); alpha.pump();
+            assertEquals(1, calls.get());
+            assertEquals(DeliveryState.APPLIED, hello.completion().toCompletableFuture().get(2, java.util.concurrent.TimeUnit.SECONDS).state());
+            assertEquals(180, alpha.pendingOutboxCount());
+        }
+    }
+
     private TranserverNode node(String nodeId, RouteResolver routes) throws Exception {
         var transport = new HttpTransport(nodeId, routes, new HmacAuthenticator(SECRET));
         return new TranserverNode(nodeId, transport,
